@@ -1,0 +1,13 @@
+streamlit>=1.33
+python-dotenv>=1.0
+openai>=1.12
+
+# File handling / images
+Pillow>=10.0
+
+# Data + export tools
+pandas>=2.0
+openpyxl>=3.1
+
+# PDF reports (attendance / performance exports)
+reportlab>=4.0

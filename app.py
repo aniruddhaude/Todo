@@ -3,7 +3,6 @@ import os
 import datetime
 import smtplib
 from email.mime.text import MIMEText
-from openai import OpenAI
 
 from auth import login_screen, BRANCHES
 from db import (
@@ -425,3 +424,4 @@ if st.session_state.current_user:
     main_layout()
 else:
     login_screen()
+

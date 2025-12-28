@@ -19,12 +19,13 @@ from db import (
 
 st.set_page_config(page_title="Todo Planner", page_icon="📚", layout="wide")
 
-load_dotenv()
-EMAIL_USER = os.getenv("EMAIL_USER")
-EMAIL_PASS = os.getenv("EMAIL_PASS")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+# ------------ CLOUD SAFE SECRETS ------------
+EMAIL_USER = st.secrets.get("EMAIL_USER")
+EMAIL_PASS = st.secrets.get("EMAIL_PASS")
+OPENAI_API_KEY = st.secrets.get("OPENAI_API_KEY")
 client = OpenAI(api_key=OPENAI_API_KEY)
 
+# ------------ DIRECTORIES ------------
 os.makedirs("submissions", exist_ok=True)
 os.makedirs("library_files", exist_ok=True)
 os.makedirs("profile_photos", exist_ok=True)
@@ -38,24 +39,19 @@ def init():
 
 init()
 
-
+# ------------ BASIC CSS ------------
 st.markdown("""
 <style>
-
 .fade-container {animation: fadein .12s ease-out;}
 @keyframes fadein {from{opacity:0;transform:translateY(2px);}to{opacity:1;transform:translateY(0);}}
-
-/* active tab highlight */
 .sidebar-active {background:#e6ebff !important;border-left:4px solid #304ffe;}
-
-/* compact sidebar buttons */
 section[data-testid="stSidebar"] button {width:100% !important;border-radius:6px;padding:4px 0;margin-bottom:1px;}
 section[data-testid="stSidebar"] div[data-testid="stButton"] {margin-bottom:2px !important;}
-
 </style>
 """, unsafe_allow_html=True)
 
 
+# ------------ EMAIL SENDER ------------
 def send_email(to, subject, message):
     if not EMAIL_USER or not EMAIL_PASS:
         return
@@ -66,7 +62,7 @@ def send_email(to, subject, message):
         server.sendmail(EMAIL_USER, to, msg.as_string())
 
 
-# ---------------- PROFILE ----------------
+# ------------ PROFILE ------------
 def profile_page():
     user = st.session_state.current_user
     conn = get_db()
@@ -100,14 +96,14 @@ def profile_page():
         st.rerun()
 
 
-# ---------------- DASHBOARD ----------------
+# ------------ DASHBOARD ------------
 def dashboard():
     user = st.session_state.current_user
     conn = get_db()
 
     st.subheader("Tasks")
 
-    # ---------- TEACHER ----------
+    # ---- TEACHER ----
     if user["role"] == "teacher":
         title = st.text_input("Task Title")
         desc = st.text_area("Description")
@@ -135,14 +131,13 @@ def dashboard():
 
         st.divider()
 
-        # ---------- ATTENDANCE MANAGER ----------
+        # ---- ATTENDANCE MANAGER ----
         st.subheader("Attendance Manager")
 
         students = conn.execute(
             "SELECT id, name, branch FROM users WHERE role='student'"
         ).fetchall()
 
-        # FIX: convert sqlite3.Row -> dict (prevents pickle error)
         students = [dict(s) for s in students]
 
         selected_student = st.selectbox(
@@ -181,7 +176,7 @@ def dashboard():
                     with open(t["pdf_path"],"rb") as f:
                         st.download_button("Download submission", f, key=f"dw{t['id']}")
 
-    # ---------- STUDENT ----------
+    # ---- STUDENT ----
     if user["role"] == "student":
         tasks = [
             t for t in get_tasks()
@@ -209,7 +204,7 @@ def dashboard():
 
         st.divider()
 
-        # ---------- ATTENDANCE VIEW (READ ONLY) ----------
+        # ---- ATTENDANCE VIEW ----
         st.subheader("Attendance (CodeChef Style)")
 
         records = get_attendance(user["id"])
@@ -249,7 +244,7 @@ def dashboard():
         st.metric("Attendance (Year)", f"{percent}%")
 
 
-# ---------------- PERFORMANCE ----------------
+# ------------ PERFORMANCE ------------
 def performance():
     st.subheader("Task Performance")
     st.dataframe(get_performance())
@@ -257,7 +252,7 @@ def performance():
     st.dataframe(get_attendance_report())
 
 
-# ---------------- LIBRARY ----------------
+# ------------ LIBRARY ------------
 def library_page():
     user = st.session_state.current_user
     st.subheader("Library")
@@ -322,7 +317,7 @@ def library_page():
                     st.rerun()
 
 
-# ---------------- ADMIN ----------------
+# ------------ ADMIN ------------
 def admin_panel():
     conn = get_db()
     st.subheader("Manage Students")
@@ -339,7 +334,7 @@ def admin_panel():
                 )
                 phone = st.text_input(
                     "Phone",
-                    u["phone"] if "phone" in u.keys() and u["phone"] else "",
+                    u.get("phone",""),
                     key=f"ph{u['id']}"
                 )
                 pw = st.text_input("Reset Password", type="password", key=f"pw{u['id']}")
@@ -360,7 +355,7 @@ def admin_panel():
                     st.success("Updated")
 
 
-# ---------------- CHAT SUPPORT ----------------
+# ------------ CHAT SUPPORT ------------
 def chat_support():
     st.subheader("Support Assistant")
 
@@ -382,7 +377,7 @@ def chat_support():
         st.rerun()
 
 
-# ---------------- LAYOUT ----------------
+# ------------ LAYOUT ------------
 def main_layout():
     st.sidebar.image("rcpit_logo.png", width=180)
 
@@ -425,9 +420,8 @@ def main_layout():
     st.markdown('</div>', unsafe_allow_html=True)
 
 
-# ---------------- ENTRY ----------------
+# ------------ ENTRY ------------
 if st.session_state.current_user:
     main_layout()
 else:
     login_screen()
-

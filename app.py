@@ -21,8 +21,7 @@ st.set_page_config(page_title="Todo Planner", page_icon="📚", layout="wide")
 # ------------ CLOUD SAFE SECRETS ------------
 EMAIL_USER = st.secrets.get("EMAIL_USER")
 EMAIL_PASS = st.secrets.get("EMAIL_PASS")
-OPENAI_API_KEY = st.secrets.get("OPENAI_API_KEY")
-client = OpenAI(api_key=OPENAI_API_KEY)
+
 
 # ------------ DIRECTORIES ------------
 os.makedirs("submissions", exist_ok=True)
@@ -424,4 +423,5 @@ if st.session_state.current_user:
     main_layout()
 else:
     login_screen()
+
 
